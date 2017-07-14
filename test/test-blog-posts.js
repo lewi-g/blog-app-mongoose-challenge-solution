@@ -8,7 +8,7 @@ const mongoose = require('mongoose');
 const should = chai.should();
 
 const { DATABASE_URL } = require('../config');
-const { BlogPost } = require('../models');
+const { BlogPost, User } = require('../models');
 const { closeServer, runServer, app } = require('../server');
 const { TEST_DATABASE_URL } = require('../config');
 
@@ -60,16 +60,16 @@ function seedUserData() {
     password: '$2a$10$aWewcqxTzrrpSchXDYb9SuhuWNNWYRWxMUsRd1RkZX8bBjlNqGlTW',
     firstName: faker.name.firstName(),
     lastName: faker.name.lastName()
-  },
-  {
-    username: 'allison_user',
-    // Substitute the hash you generated here
-    password: '$2a$10$mjFeHXylKADWX8/HCsOQAu418D.VDL6.tjpgGUH82BrS8XMOecVuW',
-    firstName: faker.name.firstName(),
-    lastName: faker.name.lastName()
+  // },
+  // {
+  //   username: 'allison_user',
+  //   // Substitute the hash you generated here
+  //   password: '$2a$10$mjFeHXylKADWX8/HCsOQAu418D.VDL6.tjpgGUH82BrS8XMOecVuW',
+  //   firstName: faker.name.firstName(),
+  //   lastName: faker.name.lastName()
   }];
   // this will return a promise
-  return BlogPost.insertMany(seedUserData);
+  return User.insertMany(seedUserData);
 }
 // include user data authentication testin in put post and delete
 
@@ -172,6 +172,7 @@ describe('blog posts API resource', function () {
 
       return chai.request(app)
         .post('/posts')
+        .auth('barb_user', 'banana')
         .send(newPost)
         .then(function (res) {
           res.should.have.status(201);
