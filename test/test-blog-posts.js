@@ -7,10 +7,10 @@ const mongoose = require('mongoose');
 // this module
 const should = chai.should();
 
-const {DATABASE_URL} = require('../config');
-const {BlogPost} = require('../models');
-const {closeServer, runServer, app} = require('../server');
-const {TEST_DATABASE_URL} = require('../config');
+const { DATABASE_URL } = require('../config');
+const { BlogPost } = require('../models');
+const { closeServer, runServer, app } = require('../server');
+const { TEST_DATABASE_URL } = require('../config');
 
 chai.use(chaiHttp);
 
@@ -36,7 +36,7 @@ function tearDownDb() {
 function seedBlogPostData() {
   console.info('seeding blog post data');
   const seedData = [];
-  for (let i=1; i<=10; i++) {
+  for (let i = 1; i <= 10; i++) {
     seedData.push({
       author: {
         firstName: faker.name.firstName(),
@@ -50,33 +50,57 @@ function seedBlogPostData() {
   return BlogPost.insertMany(seedData);
 }
 
+// seed user data 
 
-describe('blog posts API resource', function() {
+function seedUserData() {
+  console.info('seeding user data');
+  const seedData = [{
+    username: 'barb_user',
+    // Substitute the hash you generated here  password = banana
+    password: '$2a$10$aWewcqxTzrrpSchXDYb9SuhuWNNWYRWxMUsRd1RkZX8bBjlNqGlTW',
+    firstName: faker.name.firstName(),
+    lastName: faker.name.lastName()
+  },
+  {
+    username: 'allison_user',
+    // Substitute the hash you generated here
+    password: '$2a$10$mjFeHXylKADWX8/HCsOQAu418D.VDL6.tjpgGUH82BrS8XMOecVuW',
+    firstName: faker.name.firstName(),
+    lastName: faker.name.lastName()
+  }];
+  // this will return a promise
+  return BlogPost.insertMany(seedUserData);
+}
+// include user data authentication testin in put post and delete
 
-  before(function() {
+
+
+describe('blog posts API resource', function () {
+
+  before(function () {
     return runServer(TEST_DATABASE_URL);
   });
 
-  beforeEach(function() {
-    return seedBlogPostData();
+  beforeEach(function () {
+    return Promise.all([seedBlogPostData(), seedUserData()]);
   });
 
-  afterEach(function() {
+  afterEach(function () {
     // tear down database so we ensure no state from this test
     // effects any coming after.
     return tearDownDb();
   });
 
-  after(function() {
+  after(function () {
     return closeServer();
   });
 
   // note the use of nested `describe` blocks.
   // this allows us to make clearer, more discrete tests that focus
   // on proving something small
-  describe('GET endpoint', function() {
+  describe('GET endpoint', function () {
 
-    it('should return all existing posts', function() {
+    it('should return all existing posts', function () {
       // strategy:
       //    1. get back all posts returned by by GET request to `/posts`
       //    2. prove res has right status, data type
@@ -100,20 +124,20 @@ describe('blog posts API resource', function() {
         });
     });
 
-    it('should return posts with right fields', function() {
+    it('should return posts with right fields', function () {
       // Strategy: Get back all posts, and ensure they have expected keys
 
       let resPost;
       return chai.request(app)
         .get('/posts')
-        .then(function(res) {
+        .then(function (res) {
 
           res.should.have.status(200);
           res.should.be.json;
           res.body.should.be.a('array');
           res.body.should.have.length.of.at.least(1);
 
-          res.body.forEach(function(post) {
+          res.body.forEach(function (post) {
             post.should.be.a('object');
             post.should.include.keys('id', 'title', 'content', 'author', 'created');
           });
@@ -130,26 +154,26 @@ describe('blog posts API resource', function() {
     });
   });
 
-  describe('POST endpoint', function() {
+  describe('POST endpoint', function () {
     // strategy: make a POST request with data,
     // then prove that the post we get back has
     // right keys, and that `id` is there (which means
     // the data was inserted into db)
-    it('should add a new blog post', function() {
+    it('should add a new blog post', function () {
 
       const newPost = {
-          title: faker.lorem.sentence(),
-          author: {
-            firstName: faker.name.firstName(),
-            lastName: faker.name.lastName(),
-          },
-          content: faker.lorem.text()
+        title: faker.lorem.sentence(),
+        author: {
+          firstName: faker.name.firstName(),
+          lastName: faker.name.lastName(),
+        },
+        content: faker.lorem.text()
       };
 
       return chai.request(app)
         .post('/posts')
         .send(newPost)
-        .then(function(res) {
+        .then(function (res) {
           res.should.have.status(201);
           res.should.be.json;
           res.body.should.be.a('object');
@@ -163,7 +187,7 @@ describe('blog posts API resource', function() {
           res.body.content.should.equal(newPost.content);
           return BlogPost.findById(res.body.id).exec();
         })
-        .then(function(post) {
+        .then(function (post) {
           post.title.should.equal(newPost.title);
           post.content.should.equal(newPost.content);
           post.author.firstName.should.equal(newPost.author.firstName);
@@ -172,14 +196,14 @@ describe('blog posts API resource', function() {
     });
   });
 
-  describe('PUT endpoint', function() {
+  describe('PUT endpoint', function () {
 
     // strategy:
     //  1. Get an existing post from db
     //  2. Make a PUT request to update that post
     //  3. Prove post returned by request contains data we sent
     //  4. Prove post in db is correctly updated
-    it('should update fields you send over', function() {
+    it('should update fields you send over', function () {
       const updateData = {
         title: 'cats cats cats',
         content: 'dogs dogs dogs',
@@ -219,13 +243,13 @@ describe('blog posts API resource', function() {
     });
   });
 
-  describe('DELETE endpoint', function() {
+  describe('DELETE endpoint', function () {
     // strategy:
     //  1. get a post
     //  2. make a DELETE request for that post's id
     //  3. assert that response has right status code
     //  4. prove that post with the id doesn't exist in db anymore
-    it('should delete a post by id', function() {
+    it('should delete a post by id', function () {
 
       let post;
 
