@@ -14,6 +14,22 @@ const { TEST_DATABASE_URL } = require('../config');
 
 chai.use(chaiHttp);
 
+const seedData = {
+    username: 'barb_user',
+    unhashedPassword:'banana',
+    // Substitute the hash you generated here  password = banana
+    password: '$2a$10$aWewcqxTzrrpSchXDYb9SuhuWNNWYRWxMUsRd1RkZX8bBjlNqGlTW',
+    firstName: faker.name.firstName(),
+    lastName: faker.name.lastName()
+  // },
+  // {
+  //   username: 'allison_user',
+  //   // Substitute the hash you generated here
+  //   password: '$2a$10$mjFeHXylKADWX8/HCsOQAu418D.VDL6.tjpgGUH82BrS8XMOecVuW',
+  //   firstName: faker.name.firstName(),
+  //   lastName: faker.name.lastName()
+  };
+
 // this function deletes the entire database.
 // we'll call it in an `afterEach` block below
 // to ensure  ata from one test does not stick
@@ -50,26 +66,13 @@ function seedBlogPostData() {
   return BlogPost.insertMany(seedData);
 }
 
-// seed user data 
 
 function seedUserData() {
   console.info('seeding user data');
-  const seedData = [{
-    username: 'barb_user',
-    // Substitute the hash you generated here  password = banana
-    password: '$2a$10$aWewcqxTzrrpSchXDYb9SuhuWNNWYRWxMUsRd1RkZX8bBjlNqGlTW',
-    firstName: faker.name.firstName(),
-    lastName: faker.name.lastName()
-  // },
-  // {
-  //   username: 'allison_user',
-  //   // Substitute the hash you generated here
-  //   password: '$2a$10$mjFeHXylKADWX8/HCsOQAu418D.VDL6.tjpgGUH82BrS8XMOecVuW',
-  //   firstName: faker.name.firstName(),
-  //   lastName: faker.name.lastName()
-  }];
+
+  return User.create(seedData);
   // this will return a promise
-  return User.insertMany(seedUserData);
+  //return User.insertMany(seedUserData);
 }
 // include user data authentication testin in put post and delete
 
@@ -98,61 +101,61 @@ describe('blog posts API resource', function () {
   // note the use of nested `describe` blocks.
   // this allows us to make clearer, more discrete tests that focus
   // on proving something small
-  describe('GET endpoint', function () {
+  // describe('GET endpoint', function () {
 
-    it('should return all existing posts', function () {
-      // strategy:
-      //    1. get back all posts returned by by GET request to `/posts`
-      //    2. prove res has right status, data type
-      //    3. prove the number of posts we got back is equal to number
-      //       in db.
-      let res;
-      return chai.request(app)
-        .get('/posts')
-        .then(_res => {
-          res = _res;
-          res.should.have.status(200);
-          // otherwise our db seeding didn't work
-          res.body.should.have.length.of.at.least(1);
+  //   it('should return all existing posts', function () {
+  //     // strategy:
+  //     //    1. get back all posts returned by by GET request to `/posts`
+  //     //    2. prove res has right status, data type
+  //     //    3. prove the number of posts we got back is equal to number
+  //     //       in db.
+  //     let res;
+  //     return chai.request(app)
+  //       .get('/posts')
+  //       .then(_res => {
+  //         res = _res;
+  //         res.should.have.status(200);
+  //         // otherwise our db seeding didn't work
+  //         res.body.should.have.length.of.at.least(1);
 
-          return BlogPost.count();
-        })
-        .then(count => {
-          // the number of returned posts should be same
-          // as number of posts in DB
-          res.body.should.have.length.of(count);
-        });
-    });
+  //         return BlogPost.count();
+  //       })
+  //       .then(count => {
+  //         // the number of returned posts should be same
+  //         // as number of posts in DB
+  //         res.body.should.have.length.of(count);
+  //       });
+  //   });
 
-    it('should return posts with right fields', function () {
-      // Strategy: Get back all posts, and ensure they have expected keys
+  //   it('should return posts with right fields', function () {
+  //     // Strategy: Get back all posts, and ensure they have expected keys
 
-      let resPost;
-      return chai.request(app)
-        .get('/posts')
-        .then(function (res) {
+  //     let resPost;
+  //     return chai.request(app)
+  //       .get('/posts')
+  //       .then(function (res) {
 
-          res.should.have.status(200);
-          res.should.be.json;
-          res.body.should.be.a('array');
-          res.body.should.have.length.of.at.least(1);
+  //         res.should.have.status(200);
+  //         res.should.be.json;
+  //         res.body.should.be.a('array');
+  //         res.body.should.have.length.of.at.least(1);
 
-          res.body.forEach(function (post) {
-            post.should.be.a('object');
-            post.should.include.keys('id', 'title', 'content', 'author', 'created');
-          });
-          // just check one of the posts that its values match with those in db
-          // and we'll assume it's true for rest
-          resPost = res.body[0];
-          return BlogPost.findById(resPost.id).exec();
-        })
-        .then(post => {
-          resPost.title.should.equal(post.title);
-          resPost.content.should.equal(post.content);
-          resPost.author.should.equal(post.authorName);
-        });
-    });
-  });
+  //         res.body.forEach(function (post) {
+  //           post.should.be.a('object');
+  //           post.should.include.keys('id', 'title', 'content', 'author', 'created');
+  //         });
+  //         // just check one of the posts that its values match with those in db
+  //         // and we'll assume it's true for rest
+  //         resPost = res.body[0];
+  //         return BlogPost.findById(resPost.id).exec();
+  //       })
+  //       .then(post => {
+  //         resPost.title.should.equal(post.title);
+  //         resPost.content.should.equal(post.content);
+  //         resPost.author.should.equal(post.authorName);
+  //       });
+  //   });
+  // });
 
   describe('POST endpoint', function () {
     // strategy: make a POST request with data,
@@ -162,17 +165,20 @@ describe('blog posts API resource', function () {
     it('should add a new blog post', function () {
 
       const newPost = {
+        //username: 'barb_user',
+       // password: '$2a$10$vqAsYE.TWuo/5EAAllLbfusjHPEncfO1GbvCuoyLK3pjiq9FonR/q',
         title: faker.lorem.sentence(),
-        author: {
-          firstName: faker.name.firstName(),
-          lastName: faker.name.lastName(),
-        },
+        // author: {
+        //   firstName: faker.name.firstName(),
+        //   lastName: faker.name.lastName(),
+        // },
         content: faker.lorem.text()
       };
 
+
       return chai.request(app)
         .post('/posts')
-        .auth('barb_user', 'banana')
+        .auth(seedData.username, seedData.unhashedPassword)
         .send(newPost)
         .then(function (res) {
           res.should.have.status(201);
@@ -184,15 +190,15 @@ describe('blog posts API resource', function () {
           // cause Mongo should have created id on insertion
           res.body.id.should.not.be.null;
           res.body.author.should.equal(
-            `${newPost.author.firstName} ${newPost.author.lastName}`);
+            `${seedData.firstName} ${seedData.lastName}`);
           res.body.content.should.equal(newPost.content);
           return BlogPost.findById(res.body.id).exec();
         })
         .then(function (post) {
           post.title.should.equal(newPost.title);
           post.content.should.equal(newPost.content);
-          post.author.firstName.should.equal(newPost.author.firstName);
-          post.author.lastName.should.equal(newPost.author.lastName);
+          post.author.firstName.should.equal(seedData.firstName);
+          post.author.lastName.should.equal(seedData.lastName);
         });
     });
   });
